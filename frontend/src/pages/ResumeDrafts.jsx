@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { ArrowLeft, FileText, Plus, Clock, FileDown, Loader, Trash2, Eye } from 'lucide-react';
+import { ArrowLeft, FileText, Plus, Clock, FileDown, Loader, Trash2, Eye, Edit2, Check, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const ResumeDrafts = () => {
@@ -8,6 +8,8 @@ const ResumeDrafts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [fullProfileData, setFullProfileData] = useState(null);
+  const [editingDraftId, setEditingDraftId] = useState(null);
+  const [editingDraftName, setEditingDraftName] = useState("");
 
   const fetchDrafts = async () => {
     try {
@@ -47,6 +49,29 @@ const ResumeDrafts = () => {
       });
     } catch (err) {
       console.error('Failed to delete draft', err);
+    }
+  };
+
+  const handleRenameDraft = async (draftId, newName) => {
+    if (!fullProfileData || !newName.trim()) return;
+    
+    const currentDrafts = fullProfileData.resume_drafts || [];
+    const newDrafts = currentDrafts.map(d => d.id === draftId ? { ...d, name: newName.trim() } : d);
+    
+    const newFullProfile = { ...fullProfileData, resume_drafts: newDrafts };
+    setFullProfileData(newFullProfile);
+    setDrafts(newDrafts);
+    setEditingDraftId(null);
+
+    try {
+      const userId = localStorage.getItem('user_id');
+      await fetch(`http://localhost:8000/profile/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newFullProfile),
+      });
+    } catch (err) {
+      console.error('Failed to rename draft', err);
     }
   };
 
@@ -120,7 +145,43 @@ const ResumeDrafts = () => {
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color)' }}>
                     <FileDown size={20} />
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{draft.name || 'Saved Draft'}</h3>
+                    {editingDraftId === draft.id ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', width: '100%' }}>
+                        <input 
+                          autoFocus
+                          type="text" 
+                          value={editingDraftName} 
+                          onChange={(e) => setEditingDraftName(e.target.value)}
+                          onKeyDown={(e) => {
+                             if (e.key === 'Enter') handleRenameDraft(draft.id, editingDraftName);
+                             if (e.key === 'Escape') setEditingDraftId(null);
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '4px',
+                            border: '1px solid var(--primary-color)',
+                            background: 'rgba(0,0,0,0.2)',
+                            color: 'var(--text-primary)',
+                            outline: 'none',
+                            fontSize: '1rem'
+                          }}
+                        />
+                        <button onClick={() => handleRenameDraft(draft.id, editingDraftName)} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center' }}>
+                          <Check size={18} />
+                        </button>
+                        <button onClick={() => setEditingDraftId(null)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center' }}>
+                          <X size={18} />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{draft.name || 'Saved Draft'}</h3>
+                        <button onClick={() => { setEditingDraftId(draft.id); setEditingDraftName(draft.name || 'Saved Draft'); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.25rem', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'} onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'} title="Rename Draft">
+                          <Edit2 size={16} />
+                        </button>
+                      </>
+                    )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                     <Clock size={14} />

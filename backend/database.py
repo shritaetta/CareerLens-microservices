@@ -2,7 +2,7 @@ import sqlite3
 import json
 import os
 
-DB_FILE = "users.db"
+DB_FILE = os.getenv("DB_PATH", "users.db")
 
 def init_db():
     conn = sqlite3.connect(DB_FILE)

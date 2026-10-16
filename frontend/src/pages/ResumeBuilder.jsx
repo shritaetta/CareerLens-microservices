@@ -106,6 +106,7 @@ const ResumeBuilder = () => {
   const [savingFast, setSavingFast] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [error, setError] = useState(null);
+  const [draftNameInput, setDraftNameInput] = useState('');
   
   const [searchParams, setSearchParams] = useSearchParams();
   const draftIdParam = searchParams.get('draftId');
@@ -137,6 +138,7 @@ const ResumeBuilder = () => {
            const specificDraft = raw.resume_drafts.find(d => String(d.id) === draftIdParam);
            if (specificDraft && specificDraft.data) {
                setProfileData(specificDraft.data);
+               setDraftNameInput(specificDraft.name || '');
                setLoading(false);
                return; // Skip normal derivation parsing logic!
            }
@@ -340,11 +342,11 @@ const ResumeBuilder = () => {
     const isUpdating = !!existingDraft;
     
     const draftIdStr = isUpdating ? draftIdParam : Date.now().toString();
-    const draftName = isUpdating ? existingDraft.name : `Resume Draft - ${new Date().toLocaleDateString()}`;
+    const finalDraftName = draftNameInput.trim() || (isUpdating ? existingDraft.name : `Resume Draft - ${new Date().toLocaleDateString()}`);
 
     const newDraft = {
        id: draftIdStr,
-       name: draftName,
+       name: finalDraftName,
        timestamp: new Date().toISOString(),
        data: profileData
     };
@@ -435,6 +437,26 @@ const ResumeBuilder = () => {
               >
                 <Download size={18} /> Download PDF
               </button>
+
+              <div style={{ width: '100%', height: '1px', background: 'var(--border-color)', margin: '0.5rem 0' }}></div>
+              
+              <input
+                type="text"
+                placeholder={draftIdParam ? "Update draft name..." : "Name your draft..."}
+                value={draftNameInput}
+                onChange={(e) => setDraftNameInput(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: 'rgba(0,0,0,0.2)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                  fontSize: '0.9rem',
+                  boxSizing: 'border-box'
+                }}
+              />
               
               <button 
                 onClick={handleSaveDraft}

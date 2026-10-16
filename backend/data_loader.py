@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import re
@@ -14,8 +15,8 @@ def parse_numeric_stipend(stipend_str):
     return 0
 
 class InternshipDataLoader:
-    def __init__(self, file_path="C:\\Users\\siri2810\\Documents\\Book2.xlsx"):
-        self.file_path = file_path
+    def __init__(self, file_path=None):
+        self.file_path = file_path if file_path is not None else os.getenv("DATASET_PATH", "../data/Book2.xlsx")
         self.df = None
         self.internships = []
         self.internship_embeddings = None
@@ -25,6 +26,8 @@ class InternshipDataLoader:
 
     def load_data(self):
         try:
+            if self.file_path == "../data/Book2.xlsx" and os.getenv("DATASET_PATH"):
+                self.file_path = os.getenv("DATASET_PATH")
             print(f"Loading dataset from {self.file_path}...")
             self.df = pd.read_excel(self.file_path)
             

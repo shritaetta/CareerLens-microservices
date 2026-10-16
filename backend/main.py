@@ -3,18 +3,31 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+from contextlib import asynccontextmanager
 import io
 import os
 import shutil
+import uuid
 import PyPDF2
 import hashlib
 from data_loader import loader
 import database
 from resume_enhancer import ResumeEnhancer
 
-app = FastAPI(title="Internship Semantic Recommendation API with Feedback")
-
 enhancer = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global enhancer
+    loader.load_data()
+    database.init_db()
+    enhancer = ResumeEnhancer(loader.model)
+    yield
+
+app = FastAPI(
+    title="Internship Semantic Recommendation API with Feedback",
+    lifespan=lifespan
+)
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -32,13 +45,6 @@ app.add_middleware(
 # In-Memory Feedback Store
 # Structure: { "user_id": { "exclude_locations": [], "min_stipend": 0, "exclude_domains": [], "exclude_durations": [], "exclude_ids": [] } }
 feedback_store: Dict[str, Dict[str, Any]] = {}
-
-@app.on_event("startup")
-def startup_event():
-    global enhancer
-    loader.load_data()
-    database.init_db()
-    enhancer = ResumeEnhancer(loader.model)
 
 class ProfileRequest(BaseModel):
     user_id: str = "default_user"  # Fallback since frontend isn't logged in deeply
@@ -65,6 +71,10 @@ class LoginRequest(BaseModel):
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 @app.get("/")
 def keep_alive():
@@ -131,12 +141,14 @@ async def extract_pdf_text(file: UploadFile = File(...)):
 async def upload_file(file: UploadFile = File(...)):
     """Saves generic physical file and returns a static URL endpoint"""
     try:
-        file_path = os.path.join(UPLOAD_DIR, file.filename)
+        ext = os.path.splitext(file.filename or "")[1]
+        saved_filename = f"{uuid.uuid4()}{ext}"
+        file_path = os.path.join(UPLOAD_DIR, saved_filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         return {
-            "filename": file.filename, 
-            "url": f"http://localhost:8000/uploads/{file.filename}"
+            "filename": saved_filename, 
+            "url": f"/uploads/{saved_filename}"
         }
     except Exception as e:
         return {"error": str(e)}
