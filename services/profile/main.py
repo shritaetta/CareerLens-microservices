@@ -71,6 +71,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.get("/health")
+@app.get("/profile/health")
 def health():
     """Health check endpoint."""
     return {"status": "ok"}
