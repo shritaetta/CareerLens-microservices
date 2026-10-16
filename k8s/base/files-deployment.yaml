@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: files
+  labels:
+    app.kubernetes.io/part-of: careerlens
+    app: files
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: files
+  template:
+    metadata:
+      labels:
+        app: files
+    spec:
+      containers:
+        - name: files
+          image: files-service:placeholder
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: UPLOAD_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: careerlens-config
+                  key: UPLOAD_DIR
+            - name: PUBLIC_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: careerlens-config
+                  key: PUBLIC_PREFIX
+            - name: MAX_UPLOAD_MB
+              valueFrom:
+                configMapKeyRef:
+                  name: careerlens-config
+                  key: MAX_UPLOAD_MB
+          volumeMounts:
+            - name: uploads-storage
+              mountPath: /app/uploads
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+      volumes:
+        - name: uploads-storage
+          persistentVolumeClaim:
+            claimName: files-uploads-pvc

@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml
+  labels:
+    app.kubernetes.io/part-of: careerlens
+    app: ml
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ml
+  template:
+    metadata:
+      labels:
+        app: ml
+    spec:
+      initContainers:
+        - name: seed-dataset
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -f /data/Book2.xlsx ]; then
+                echo "Seeding Book2.xlsx into ML dataset PVC..."
+                cp /seed/Book2.xlsx /data/Book2.xlsx
+                echo "Dataset seeded successfully."
+              else
+                echo "Dataset Book2.xlsx already exists in PVC."
+              fi
+          volumeMounts:
+            - name: ml-data
+              mountPath: /data
+            - name: seed-config
+              mountPath: /seed
+      containers:
+        - name: ml
+          image: ml-service:placeholder
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: DATASET_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: careerlens-config
+                  key: DATASET_PATH
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: careerlens-config
+                  key: REDIS_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: careerlens-secrets
+                  key: JWT_SECRET
+            - name: JWT_EXPIRE_MINUTES
+              valueFrom:
+                configMapKeyRef:
+                  name: careerlens-config
+                  key: JWT_EXPIRE_MINUTES
+            - name: JWT_ALGORITHM
+              valueFrom:
+                configMapKeyRef:
+                  name: careerlens-config
+                  key: JWT_ALGORITHM
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: ml-data
+              mountPath: /data
+              readOnly: true
+      volumes:
+        - name: ml-data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: seed-config
+          configMap:
+            name: ml-dataset-seed

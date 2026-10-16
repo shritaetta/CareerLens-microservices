@@ -8,8 +8,12 @@ echo "CareerLens Microservices Stack Smoke Test"
 echo "=========================================="
 
 # 1. Bring stack up if not already running
-echo "[STEP 1] Bringing stack up..."
-docker compose up -d --build
+if [ "${SKIP_COMPOSE:-false}" != "true" ]; then
+  echo "[STEP 1] Bringing stack up with docker compose..."
+  docker compose up -d --build
+else
+  echo "[STEP 1] Skipping docker compose up (SKIP_COMPOSE=true)..."
+fi
 
 echo "Waiting for all microservices to report healthy..."
 MAX_RETRIES=40

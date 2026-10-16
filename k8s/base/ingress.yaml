@@ -1,0 +1,123 @@
+# Ingress resources replacing the Nginx API gateway with exact routing rules
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: careerlens-ingress-api
+  labels:
+    app.kubernetes.io/part-of: careerlens
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/auth(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: auth
+                port:
+                  number: 8000
+          - path: /api/files(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: files
+                port:
+                  number: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: careerlens-ingress-profile
+  labels:
+    app.kubernetes.io/part-of: careerlens
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /profile/$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/profile(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: profile
+                port:
+                  number: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: careerlens-ingress-ml
+  labels:
+    app.kubernetes.io/part-of: careerlens
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/ml(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ml
+                port:
+                  number: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: careerlens-ingress-gateway-health
+  labels:
+    app.kubernetes.io/part-of: careerlens
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /health
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /gateway-health
+            pathType: Exact
+            backend:
+              service:
+                name: auth
+                port:
+                  number: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: careerlens-ingress-frontend
+  labels:
+    app.kubernetes.io/part-of: careerlens
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

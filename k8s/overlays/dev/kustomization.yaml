@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+# Secret generated from literals in the dev overlay only, never committed with real production secrets
+secretGenerator:
+  - name: careerlens-secrets
+    literals:
+      - JWT_SECRET=dev-careerlens-super-secret-jwt-token-key-32bytes
+      - POSTGRES_PASSWORD=postgres
+
+# Replace placeholder image names with local dev container images
+images:
+  - name: auth-service:placeholder
+    newName: careerlens-auth
+    newTag: latest
+  - name: profile-service:placeholder
+    newName: careerlens-profile
+    newTag: latest
+  - name: files-service:placeholder
+    newName: careerlens-files
+    newTag: latest
+  - name: ml-service:placeholder
+    newName: careerlens-ml
+    newTag: latest
+  - name: frontend:placeholder
+    newName: careerlens-frontend
+    newTag: latest

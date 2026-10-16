@@ -43,12 +43,15 @@ def main():
     log("==========================================")
 
     # 1. Bring stack up
-    log("[STEP 1] Bringing stack up with docker compose...")
-    compose_cmd = ["docker", "compose", "up", "-d", "--build"]
-    ret = subprocess.run(compose_cmd)
-    if ret.returncode != 0:
-        log("[FAIL] Step 1: docker compose up --build failed")
-        sys.exit(1)
+    if os.environ.get("SKIP_COMPOSE", "false").lower() != "true":
+        log("[STEP 1] Bringing stack up with docker compose...")
+        compose_cmd = ["docker", "compose", "up", "-d", "--build"]
+        ret = subprocess.run(compose_cmd)
+        if ret.returncode != 0:
+            log("[FAIL] Step 1: docker compose up --build failed")
+            sys.exit(1)
+    else:
+        log("[STEP 1] Skipping docker compose up (SKIP_COMPOSE=true)...")
 
     log("Waiting for microservices to report healthy...")
     endpoints = {

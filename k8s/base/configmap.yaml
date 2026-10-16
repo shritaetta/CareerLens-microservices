@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: careerlens-config
+  labels:
+    app.kubernetes.io/part-of: careerlens
+data:
+  POSTGRES_USER: "postgres"
+  POSTGRES_DB: "postgres"
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_URL: "redis://redis:6379/0"
+  UPLOAD_DIR: "/app/uploads"
+  PUBLIC_PREFIX: "/api/files/uploads"
+  MAX_UPLOAD_MB: "10"
+  DATASET_PATH: "/data/Book2.xlsx"
+  JWT_ALGORITHM: "HS256"
+  JWT_EXPIRE_MINUTES: "60"

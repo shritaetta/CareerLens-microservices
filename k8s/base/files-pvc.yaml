@@ -1,0 +1,15 @@
+# NOTE: This PersistentVolumeClaim provides local filesystem storage for uploaded files in development.
+# In a production environment, this should be replaced with an S3-compatible object storage service (e.g. AWS S3, MinIO, or Google Cloud Storage).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: files-uploads-pvc
+  labels:
+    app.kubernetes.io/part-of: careerlens
+    app: files
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
