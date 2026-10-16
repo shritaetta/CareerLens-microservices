@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import InternshipCard from '../components/InternshipCard';
 import { ArrowLeft, Heart, Loader } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiFetch } from '../api';
 
 const LikedRecommendations = () => {
   const [likedInternships, setLikedInternships] = useState([]);
@@ -15,7 +16,7 @@ const LikedRecommendations = () => {
       const userId = localStorage.getItem('user_id');
       if (!userId) throw new Error("User not logged in");
 
-      const res = await fetch(`http://localhost:8000/profile/${userId}`);
+      const res = await apiFetch(`/api/profile/${userId}`);
       if (!res.ok) throw new Error('Failed to fetch profile');
       const data = await res.json();
       
@@ -54,7 +55,7 @@ const LikedRecommendations = () => {
 
     try {
       const userId = localStorage.getItem('user_id');
-      await fetch(`http://localhost:8000/profile/${userId}`, {
+      await apiFetch(`/api/profile/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newFullProfile),

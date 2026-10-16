@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, User, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { apiFetch } from '../api';
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +33,7 @@ const Signup = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/signup', {
+      const response = await apiFetch('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,9 +51,12 @@ const Signup = () => {
         setError(data.error || data.detail || "Signup failed. Please try again.");
       } else {
         localStorage.setItem('user_id', data.user_id);
+        if (data.access_token) {
+          localStorage.setItem('access_token', data.access_token);
+        }
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch {
       setError("Failed to connect to server. Please try again.");
     } finally {
       setLoading(false);

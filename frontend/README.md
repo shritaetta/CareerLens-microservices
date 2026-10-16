@@ -1,16 +1,64 @@
-# React + Vite
+# CareerLens Frontend Service
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 single-page application built with Vite and React Router, styled with modern vanilla CSS and Lucide icons.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Architecture & API Routing
 
-## React Compiler
+All backend API communications are routed through `src/api.js`:
+- Base API URL is configurable via `VITE_API_URL` (defaults to `/api`).
+- `apiFetch(path, options)` automatically attaches `Authorization: Bearer <token>` from `localStorage('access_token')`.
+- Handles `401 Unauthorized` by clearing local credentials and redirecting unauthenticated users to `/login`.
+- Relative file URLs (e.g., uploaded resumes and certificates) are resolved via `getFileUrl(url)`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Endpoint Mappings
+- **Auth**: `/login`, `/signup` → `/api/auth/login`, `/api/auth/signup`
+- **Profile**: `/profile/:id` → `/api/profile/:id`
+- **Files**: `/upload`, `/extract_pdf` → `/api/files/upload`, `/api/files/extract_pdf`
+- **ML**: `/recommend`, `/feedback`, `/evaluate_ats`, `/enhance_profile`, `/internships/light` → `/api/ml/...`
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Environment Variables
+
+Configurable in `.env` (see `.env.example`):
+
+| Variable | Description | Default |
+|---|---|---|
+| `VITE_API_URL` | Base API URL prefix for client requests | `/api` |
+| `VITE_GATEWAY_URL` | Gateway target URL for Vite dev server proxy | `http://localhost:8080` |
+
+---
+
+## Local Development
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Start Vite dev server with proxy to Gateway
+npm run dev
+
+# 3. Lint source files
+npm run lint
+
+# 4. Create production build
+npm run build
+```
+
+During development with `npm run dev`, any requests sent to `/api/*` are automatically proxied to the gateway specified by `VITE_GATEWAY_URL` (default: `http://localhost:8080`).
+
+---
+
+## Docker Deployment
+
+### Build the Image
+```bash
+docker build -t careerlens-frontend:latest .
+```
+
+### Run the Container
+```bash
+docker run -d -p 80:80 --name careerlens-frontend careerlens-frontend:latest
+```

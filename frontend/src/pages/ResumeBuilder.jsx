@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import ResumeTemplate from '../components/ResumeTemplate';
 import { ArrowLeft, Loader, Download, Edit3, Save, Check } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { apiFetch } from '../api';
 import './ResumeBuilder.css';
 
 const parseResumeText = (text) => {
@@ -120,7 +121,7 @@ const ResumeBuilder = () => {
           setLoading(false);
           return;
         }
-        const response = await fetch(`http://localhost:8000/profile/${USER_ID}`);
+        const response = await apiFetch(`/api/profile/${USER_ID}`);
         if (!response.ok) throw new Error('Failed to fetch profile data');
         const data = await response.json();
         
@@ -301,7 +302,7 @@ const ResumeBuilder = () => {
 
         // --- OFFLINE ENHANCEMENT PIPELINE ---
         try {
-            const enrichResponse = await fetch(`http://localhost:8000/enhance_profile`, {
+            const enrichResponse = await apiFetch('/api/ml/enhance_profile', {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify({ ...raw, ...transformed, user_id: USER_ID })
@@ -327,7 +328,7 @@ const ResumeBuilder = () => {
       }
     };
     fetchProfile();
-  }, []);
+  }, [draftIdParam]);
 
   const handleDownload = () => {
     window.print();
@@ -365,7 +366,7 @@ const ResumeBuilder = () => {
 
     try {
       const USER_ID = localStorage.getItem('user_id');
-      await fetch(`http://localhost:8000/profile/${USER_ID}`, {
+      await apiFetch(`/api/profile/${USER_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedFullProfile),

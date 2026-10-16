@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { apiFetch } from '../api';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,7 +26,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/login', {
+      const response = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,9 +43,12 @@ const Login = () => {
         setError(data.error || data.detail || "Login failed. Please check credentials.");
       } else {
         localStorage.setItem('user_id', data.user_id);
+        if (data.access_token) {
+          localStorage.setItem('access_token', data.access_token);
+        }
         navigate('/dashboard');
       }
-    } catch (err) {
+    } catch {
       setError("Failed to connect to server. Please try again.");
     } finally {
       setLoading(false);

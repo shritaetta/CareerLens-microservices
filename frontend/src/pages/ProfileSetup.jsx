@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { UploadCloud, X, CheckCircle, File, Briefcase, GraduationCap, MapPin, Plus, Trash2, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { apiFetch, getFileUrl } from '../api';
 import './ProfileSetup.css';
 
 const PREDEFINED_SKILLS = [
@@ -73,7 +74,7 @@ const ProfileSetup = () => {
       const userId = localStorage.getItem('user_id');
       if (!userId) return; 
       try {
-        const response = await fetch(`http://localhost:8000/profile/${userId}`);
+        const response = await apiFetch(`/api/profile/${userId}`);
         const data = await response.json();
         if (data.profile_data) {
           const pd = data.profile_data;
@@ -201,7 +202,7 @@ const ProfileSetup = () => {
       if (resume) {
         const formData = new FormData();
         formData.append('file', resume);
-        const res = await fetch('http://localhost:8000/upload', { method: 'POST', body: formData });
+        const res = await apiFetch('/api/files/upload', { method: 'POST', body: formData });
         const data = await res.json();
         if (data.url) {
            currentSavedResume = { name: data.filename, url: data.url };
@@ -211,7 +212,7 @@ const ProfileSetup = () => {
       for (let i = 0; i < certificates.length; i++) {
         const formData = new FormData();
         formData.append('file', certificates[i]);
-        const res = await fetch('http://localhost:8000/upload', { method: 'POST', body: formData });
+        const res = await apiFetch('/api/files/upload', { method: 'POST', body: formData });
         const data = await res.json();
         
         let extracted_text = "";
@@ -219,7 +220,7 @@ const ProfileSetup = () => {
             try {
                const extractForm = new FormData();
                extractForm.append('file', certificates[i]);
-               const extRes = await fetch('http://localhost:8000/extract_pdf', { method: 'POST', body: extractForm });
+               const extRes = await apiFetch('/api/files/extract_pdf', { method: 'POST', body: extractForm });
                const extData = await extRes.json();
                if (extData.extracted_text) extracted_text = extData.extracted_text;
             } catch (e) { console.error("Extraction error", e); }
@@ -250,7 +251,7 @@ const ProfileSetup = () => {
     };
 
     try {
-      await fetch(`http://localhost:8000/profile/${userId}`, {
+      await apiFetch(`/api/profile/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData)
@@ -474,7 +475,7 @@ const ProfileSetup = () => {
                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}><File size={16} /> {savedResume.name}</span>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
-                         <a href={savedResume.url} target="_blank" rel="noreferrer" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8', padding: '0.4rem', borderRadius: '6px', display: 'flex' }}><Eye size={16} /></a>
+                         <a href={getFileUrl(savedResume.url)} target="_blank" rel="noreferrer" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8', padding: '0.4rem', borderRadius: '6px', display: 'flex' }}><Eye size={16} /></a>
                          <button type="button" onClick={() => removeSavedFile('resume')} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', display: 'flex' }}><Trash2 size={16} /></button>
                       </div>
                    </div>
@@ -506,7 +507,7 @@ const ProfileSetup = () => {
                       <div key={`saved-cert-${idx}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '8px' }}>
                           <span style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><File size={14} /> {cert.name}</span>
                           <div style={{ display: 'flex', gap: '0.5rem' }}>
-                             <a href={cert.url} target="_blank" rel="noreferrer" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8', padding: '0.3rem', borderRadius: '6px', display: 'flex' }}><Eye size={14} /></a>
+                             <a href={getFileUrl(cert.url)} target="_blank" rel="noreferrer" style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#818cf8', padding: '0.3rem', borderRadius: '6px', display: 'flex' }}><Eye size={14} /></a>
                              <button type="button" onClick={() => removeSavedFile('cert', idx)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '0.3rem', borderRadius: '6px', cursor: 'pointer', display: 'flex' }}><Trash2 size={14} /></button>
                           </div>
                       </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import { ArrowLeft, Loader, CheckCircle, XCircle, AlertCircle, TrendingUp, UploadCloud } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiFetch } from '../api';
 import './ATSEvaluation.css';
 
 const ATSEvaluation = () => {
@@ -20,7 +21,7 @@ const ATSEvaluation = () => {
   useEffect(() => {
     const fetchInternships = async () => {
       try {
-        const res = await fetch('http://localhost:8000/internships/light');
+        const res = await apiFetch('/api/ml/internships/light');
         if (!res.ok) throw new Error("Failed to fetch internship list");
         const data = await res.json();
         setInternships(data);
@@ -41,7 +42,7 @@ const ATSEvaluation = () => {
     formData.append("file", file);
 
     try {
-      const res = await fetch('http://localhost:8000/extract_pdf', {
+      const res = await apiFetch('/api/files/extract_pdf', {
         method: 'POST',
         body: formData
       });
@@ -73,7 +74,7 @@ const ATSEvaluation = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:8000/evaluate_ats', {
+      const res = await apiFetch('/api/ml/evaluate_ats', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

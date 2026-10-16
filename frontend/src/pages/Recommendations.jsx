@@ -4,6 +4,7 @@ import InternshipCard from '../components/InternshipCard';
 import FeedbackModal from '../components/FeedbackModal';
 import { ArrowLeft, Loader } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiFetch } from '../api';
 
 const Recommendations = () => {
   const [internships, setInternships] = useState([]);
@@ -27,14 +28,13 @@ const Recommendations = () => {
       }
 
       // 1. Fetch user's saved SQLite profile
-      const profileRes = await fetch(`http://localhost:8000/profile/${userId}`);
+      const profileRes = await apiFetch(`/api/profile/${userId}`);
       if (!profileRes.ok) throw new Error('Failed to fetch user profile');
       const profileDataRaw = await profileRes.json();
       const raw = profileDataRaw.profile_data || {};
       setFullProfileData(raw);
 
       const profilePayload = {
-        user_id: userId,
         skills: raw.skills || [],
         education: raw.education?.graduation?.institute ? `${raw.education.graduation.board || 'Degree'}, ${raw.education.graduation.institute}` : '',
         achievements: raw.achievements || '',
@@ -45,7 +45,7 @@ const Recommendations = () => {
       setUserProfile(profilePayload);
 
       // 2. Fetch semantic matches
-      const response = await fetch('http://localhost:8000/recommend', {
+      const response = await apiFetch('/api/ml/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profilePayload),
@@ -89,7 +89,8 @@ const Recommendations = () => {
     setFullProfileData(newFullProfile);
 
     try {
-      await fetch(`http://localhost:8000/profile/${userProfile.user_id}`, {
+      const userId = localStorage.getItem('user_id');
+      await apiFetch(`/api/profile/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newFullProfile),
@@ -105,11 +106,10 @@ const Recommendations = () => {
     setModalInternship(null);
     
     try {
-      await fetch('http://localhost:8000/feedback', {
+      await apiFetch('/api/ml/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: userProfile.user_id || 'default_user',
           internship_id: String(internship.id),
           reason: reason,
           metadata: {
@@ -149,7 +149,7 @@ const Recommendations = () => {
         ) : error ? (
           <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#fca5a5', padding: '1.5rem', borderRadius: '12px' }}>
             <p><strong>Error:</strong> {error}</p>
-            <p style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>Ensure the FastAPI backend is running on port 8000.</p>
+            <p style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>Ensure the backend services are running.</p>
           </div>
         ) : internships.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--card-bg)', borderRadius: '20px' }}>

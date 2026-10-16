@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { apiFetch } from '../api';
 import { 
   Sparkles, 
   FileText, 
@@ -25,7 +26,7 @@ const Dashboard = () => {
     const fetchProfile = async () => {
       const userId = localStorage.getItem('user_id') || 'default_user';
       try {
-        const response = await fetch(`http://localhost:8000/profile/${userId}`);
+        const response = await apiFetch(`/api/profile/${userId}`);
         const data = await response.json();
         if (data.profile_data) {
           setProfile(data.profile_data);
